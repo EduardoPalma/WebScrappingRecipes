@@ -1,0 +1,13 @@
+﻿Appetizers and Snacks;Snack.Aperitivo
+Beverages;Almuerzo.Bebidas
+Bread;Desayuno|Almuerzo|Cena.Pan
+Breakfast;Desayuno.Desayuno
+Desserts;Almuerzo.Postre
+Dressings, Dips and Spreads;Almuerzo|Cena.Salsa|Entrada
+Entrees;Almuerzo|Cena.Entrada
+Lunch;Almuerzo|Cena.Plato principal
+Salads;Almuerzo|Desayuno|Cena.Entrada
+Sandwich;Desayuno|Almuerzo|Cena|Snack.Aperitivo|Sandwich
+Soups, Stews, and Curries;Almuerzo|Cena.Sopa|
+Vegan;Almuerzo|Cena.Vegano
+Vegetarian;Almuerzo|Cena.Vegetariano

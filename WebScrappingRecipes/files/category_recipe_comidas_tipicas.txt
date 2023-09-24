@@ -1,0 +1,8 @@
+﻿Plato principal,Almuerzo;Cena
+Postres,Almuerzo
+Aperitivos;Sandwich,Cena;Almuerzo;Desayuno;Snack
+Entrada,Almuerzo;Cena
+Bebidas,Almuerzo
+Pan,Almuerzo;Cena;Desayuno
+Saludables;entrada,Almuerzo;Cena
+Ensalada;Entrada,Almuerzo;Cena;Desayuno

@@ -1,0 +1,4 @@
+Almuerzo,Almuerzo;Cena;Comida;Condimentos;Guarniciones;Bebidas;Pan;Platos principales;Postres;Entrada;Ensalada;Salsa;Vegana;Sandwich;Postres y Refrigerios;Comidas
+Cena,Almuerzo;Cena;Comida;Bebidas;Pan;Platos principales;Guarniciones;Ensalada;Entrada;Salsa;Vegana;Sandwich
+Desayuno,Aperitivos;Refrigerios;Ensalada;Pan;Sandwich;Desayunos
+Snack,Refrigerios;Aperitivos;Sandwich;Desayunos
