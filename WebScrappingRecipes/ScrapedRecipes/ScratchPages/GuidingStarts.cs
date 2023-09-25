@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Net;
+using System.Text.RegularExpressions;
 using HtmlAgilityPack;
 using ScrapySharp.Extensions;
 using WebScrappingRecipes.Utils;
@@ -20,48 +21,67 @@ public static partial class GuidingStarts
         ("https://guidingstars.com/dish/vegan-vegetarian-2/", 44), ("https://guidingstars.com/dish/vegetarian-2/", 77)
     };
 
+    [Obsolete("Obsolete")]
     public static void GetInformationRecipes(int cantPages)
     {
         var html = new HtmlWeb();
         for (var i = 0; i < cantPages; i++)
         {
             var url = Urls.ToList()[i].url;
-            for (var j = 1; j <= 2; j++)
+            for (var j = 1; j <= Urls.ToList()[i].cant; j++)
             {
                 var loadPage = j > 1 ? html.Load($"{url}page/{j}/") : html.Load(url);
-                var urlRecipes = loadPage.DocumentNode.CssSelect("[class='site-main']").First()
-                    .CssSelect("[class='entry-content']")
-                    .Select(x => x.CssSelect("a").First().GetAttributeValue("href"));
-                var recipes = InformationRecipes(urlRecipes, html);
+                try
+                {
+                    var urlRecipes = loadPage.DocumentNode.CssSelect("[class='site-main']").First()
+                        .CssSelect("[class='entry-content']")
+                        .Select(x => x.CssSelect("a").First().GetAttributeValue("href")).ToList();
+                    if (!urlRecipes.Any()) continue;
+                    var recipes = InformationRecipes(urlRecipes, html);
+                    Elastic.Elastic.AddMultipleRecipes("recipes-en", recipes);
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine("error urlRecipes "+ loadPage);
+                    throw;
+                }
             }
         }
     }
 
+    [Obsolete("Obsolete")]
     private static IEnumerable<Recipes> InformationRecipes(IEnumerable<string> urlRecipes, HtmlWeb html)
     {
         var recipes = new List<Recipes>();
         foreach (var urlRecipe in urlRecipes)
         {
-            var loadPageRecipe = html.Load(urlRecipe);
-            var nameRecipe = loadPageRecipe.DocumentNode.CssSelect("[class='entry-title']").First().InnerText
-                .CleanInnerText();
-            Console.WriteLine(urlRecipe);
-            const string author = "GuidingStart";
-            var portionAndTime = GetPortionTime(loadPageRecipe);
-            var ingredients = GetIngredientRecipe(loadPageRecipe);
-            var steps = GetStepsRecipe(loadPageRecipe);
-            var guid = Guid.NewGuid().ToString();
-            var categoryAndFoodDay = GetCategoryAndFoodDay(loadPageRecipe);
-            if (portionAndTime.portion == 0) continue;
-            var recipe = new Recipes
+            try
             {
-                Name = nameRecipe, Portions = portionAndTime.portion, PreparationTime = portionAndTime.preparationTime,
-                Difficulty = "", IdImage = guid, Autor = author, Ingredients = ingredients, Steps = steps,
-                Url = urlRecipe, CategoryRecipe = categoryAndFoodDay.categoryRecipe,
-                FoodDays = categoryAndFoodDay.foodDays
-            };
-            GetImageRecipe(loadPageRecipe);
-            recipes.Add(recipe);
+                var loadPageRecipe = html.Load(urlRecipe);
+                var nameRecipe = loadPageRecipe.DocumentNode.CssSelect("[class='entry-title']").First().InnerText
+                    .CleanInnerText();
+                const string author = "GuidingStart";
+                var portionAndTime = GetPortionTime(loadPageRecipe);
+                var ingredients = GetIngredientRecipe(loadPageRecipe);
+                var steps = GetStepsRecipe(loadPageRecipe);
+                var guid = Guid.NewGuid().ToString();
+                var categoryAndFoodDay = GetCategoryAndFoodDay(loadPageRecipe);
+                if (portionAndTime.portion == 0 || !ingredients.Any()) continue;
+                var recipe = new Recipes
+                {
+                    Name = nameRecipe, Portions = portionAndTime.portion,
+                    PreparationTime = portionAndTime.preparationTime,
+                    Difficulty = "", IdImage = guid, Autor = author, Ingredients = ingredients, Steps = steps,
+                    Url = urlRecipe, CategoryRecipe = categoryAndFoodDay.categoryRecipe,
+                    FoodDays = categoryAndFoodDay.foodDays
+                };
+                GetImageRecipe(loadPageRecipe, guid);
+                recipes.Add(recipe);
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("Error in page Recipe : " + urlRecipe);
+            }
         }
 
         return recipes;
@@ -84,7 +104,7 @@ public static partial class GuidingStarts
             if (!textWithTime.Contains("hour")) return int.Parse(Number().Match(textWithTime).Value);
             return int.Parse(Number().Match(textWithTime).Value) * 60;
         }
-        catch (Exception )
+        catch (Exception)
         {
             return 0;
         }
@@ -115,11 +135,14 @@ public static partial class GuidingStarts
         return (categoryAndFoodDay.foodDays, categoryAndFoodDay.categoryRecipe);
     }
 
-    private static void GetImageRecipe(HtmlDocument loadPageRecipe)
+    [Obsolete("Obsolete")]
+    private static void GetImageRecipe(HtmlDocument loadPageRecipe, string guid)
     {
+        using var oClient = new WebClient();
         var uri = loadPageRecipe.DocumentNode.CssSelect("[class='recipe__photo']").First().CssSelect("img").First()
             .GetAttributeValue("src");
-        Console.WriteLine(uri);
+        oClient.DownloadFile(new Uri(uri),
+            $"C:/Users/hello/RiderProjects/WebScrappingRecipes/WebScrappingRecipes/files/image_recipes/{guid}.jpg");
     }
 
     [GeneratedRegex("\\d+")]
