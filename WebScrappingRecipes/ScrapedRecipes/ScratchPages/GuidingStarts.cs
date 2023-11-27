@@ -21,7 +21,7 @@ public static partial class GuidingStarts
         ("https://guidingstars.com/dish/vegan-vegetarian-2/", 44), ("https://guidingstars.com/dish/vegetarian-2/", 77)
     };
 
-    [Obsolete("Obsolete")]
+    [Obsolete($"Obsolete")]
     public static void GetInformationRecipes(int cantPages)
     {
         var html = new HtmlWeb();
@@ -42,7 +42,7 @@ public static partial class GuidingStarts
                 }
                 catch (Exception)
                 {
-                    Console.WriteLine("error urlRecipes "+ loadPage);
+                    Console.WriteLine("error urlRecipes " + loadPage);
                     throw;
                 }
             }
@@ -112,10 +112,24 @@ public static partial class GuidingStarts
 
     private static ICollection<Ingredient> GetIngredientRecipe(HtmlDocument loadPageRecipe)
     {
-        var listIngredient = loadPageRecipe.DocumentNode.CssSelect("[class='recipe__ingredients']").First()
-            .CssSelect("[itemprop='ingredients']").Select(ingredientText =>
-                new Ingredient { IngredientText = ingredientText.InnerText.CleanInnerText() }).ToList();
-        return listIngredient;
+        var listIngredient = loadPageRecipe.DocumentNode.CssSelect("[class='recipe__ingredients']").First();
+
+        try
+        {
+            var existsH3 = listIngredient.SelectSingleNode("[class='h4']") != null;
+            var ingredients = listIngredient
+                .CssSelect("li")
+                .Select(ingredientText => new Ingredient { IngredientText = ingredientText.InnerText.CleanInnerText() })
+                .ToList();
+            return ingredients;
+        }
+        catch (Exception e)
+        {
+            var ingredients = listIngredient.CssSelect("[itemprop='ingredients']")
+                .Select(ingredientText => new Ingredient { IngredientText = ingredientText.InnerText.CleanInnerText() })
+                .ToList();
+            return ingredients;
+        }
     }
 
     private static ICollection<string> GetStepsRecipe(HtmlDocument loadPageRecipe)
