@@ -6,7 +6,7 @@ using WebScrappingRecipes.Utils;
 
 namespace WebScrappingRecipes.ScrapedRecipes.ScratchPages;
 
-public static partial class GuidingStarts
+public partial class GuidingStarts : IInformationRecipe
 {
     private static readonly ICollection<(string url, int cant)> Urls = new List<(string, int)>
     {
@@ -22,7 +22,7 @@ public static partial class GuidingStarts
     };
 
     [Obsolete($"Obsolete")]
-    public static void GetInformationRecipes(int cantPages)
+    public void GetInformationRecipes(int cantPages)
     {
         var html = new HtmlWeb();
         for (var i = 0; i < cantPages; i++)
@@ -50,7 +50,7 @@ public static partial class GuidingStarts
     }
 
     [Obsolete("Obsolete")]
-    private static IEnumerable<Recipes> InformationRecipes(IEnumerable<string> urlRecipes, HtmlWeb html)
+    private IEnumerable<Recipes> InformationRecipes(IEnumerable<string> urlRecipes, HtmlWeb html)
     {
         var recipes = new List<Recipes>();
         foreach (var urlRecipe in urlRecipes)
@@ -60,7 +60,7 @@ public static partial class GuidingStarts
                 var loadPageRecipe = html.Load(urlRecipe);
                 var nameRecipe = loadPageRecipe.DocumentNode.CssSelect("[class='entry-title']").First().InnerText
                     .CleanInnerText();
-                const string author = "GuidingStart";
+                const string author = "Guiding Stars";
                 var portionAndTime = GetPortionTime(loadPageRecipe);
                 var ingredients = GetIngredientRecipe(loadPageRecipe);
                 var steps = GetStepsRecipe(loadPageRecipe);
@@ -71,7 +71,7 @@ public static partial class GuidingStarts
                 {
                     Name = nameRecipe, Portions = portionAndTime.portion,
                     PreparationTime = portionAndTime.preparationTime,
-                    Difficulty = "", IdImage = guid, Autor = author, Ingredients = ingredients, Steps = steps,
+                    Difficulty = "", IdImage = guid, Author = author, Ingredients = ingredients, Steps = steps,
                     Url = urlRecipe, CategoryRecipe = categoryAndFoodDay.categoryRecipe,
                     FoodDays = categoryAndFoodDay.foodDays
                 };
@@ -87,11 +87,10 @@ public static partial class GuidingStarts
         return recipes;
     }
 
-    private static (int portion, int preparationTime) GetPortionTime(HtmlDocument loadPageRecipe)
+    private (int portion, int preparationTime) GetPortionTime(HtmlDocument loadPageRecipe)
     {
         var elements = loadPageRecipe.DocumentNode.CssSelect("[class='recipe__meta']").First();
-        var portion = int.Parse(Number()
-            .Matches(elements.CssSelect("[itemprop='recipeYield']").First().InnerText.CleanInnerText()).First().Value);
+        var portion = int.Parse(GetPortionRecipe(loadPageRecipe));
         var preparationTime =
             GetTimeRecipe(elements.CssSelect("[itemprop='cookTime']").First().InnerText.CleanInnerText());
         return (portion, preparationTime);
@@ -110,26 +109,36 @@ public static partial class GuidingStarts
         }
     }
 
-    private static ICollection<Ingredient> GetIngredientRecipe(HtmlDocument loadPageRecipe)
+    public ICollection<Ingredient> GetIngredientRecipe(HtmlDocument loadPageRecipe)
     {
         var listIngredient = loadPageRecipe.DocumentNode.CssSelect("[class='recipe__ingredients']").First();
 
         try
         {
-            var existsH3 = listIngredient.SelectSingleNode("[class='h4']") != null;
+            var existsH3 = listIngredient.CssSelect("[class='h4']").First().InnerText;
+            Console.WriteLine("H4 obtenido" + existsH3);
             var ingredients = listIngredient
-                .CssSelect("li")
-                .Select(ingredientText => new Ingredient { IngredientText = ingredientText.InnerText.CleanInnerText() })
+                .CssSelect("[itemprop='ingredients']")
+                .Select(ingredientText => new Ingredient
+                    { IngredientText = ingredientText.InnerText.CleanInnerText() })
                 .ToList();
             return ingredients;
         }
-        catch (Exception e)
+        catch (Exception)
         {
-            var ingredients = listIngredient.CssSelect("[itemprop='ingredients']")
+            var ingredients = listIngredient.CssSelect("li")
                 .Select(ingredientText => new Ingredient { IngredientText = ingredientText.InnerText.CleanInnerText() })
                 .ToList();
             return ingredients;
         }
+    }
+
+    public string GetPortionRecipe(HtmlDocument loadPageRecipe)
+    {
+        var elements = loadPageRecipe.DocumentNode.CssSelect("[class='recipe__meta']").First();
+        var portion = Number()
+            .Matches(elements.CssSelect("[itemprop='recipeYield']").First().InnerText.CleanInnerText()).First().Value;
+        return portion;
     }
 
     private static ICollection<string> GetStepsRecipe(HtmlDocument loadPageRecipe)

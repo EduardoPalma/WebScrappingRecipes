@@ -6,7 +6,7 @@ using WebScrappingRecipes.Utils;
 
 namespace WebScrappingRecipes.ScrapedRecipes.ScratchPages;
 
-public static partial class ComidasTipicasChilenas
+public partial class ComidasTipicasChilenas : IInformationRecipe
 {
     private static readonly string[] Urls =
     {
@@ -21,7 +21,7 @@ public static partial class ComidasTipicasChilenas
     };
 
     [Obsolete("Obsolete")]
-    public static void GetInformationRecipes(int cantPages)
+    public void GetInformationRecipes(int cantPages)
     {
         var html = new HtmlWeb();
         for (var i = 0; i < cantPages; i++)
@@ -30,12 +30,12 @@ public static partial class ComidasTipicasChilenas
             var urlRecipes = loadPage.DocumentNode.CssSelect("[class='pt-cv-wrapper']").First()
                 .CssSelect("[class='pt-cv-ifield']").Select(x => x.CssSelect("a").First().GetAttributeValue("href"));
             var recipes = InformationRecipes(urlRecipes, html, i);
-            Elastic.Elastic.AddMultipleRecipes("recipes-es",recipes);
+            Elastic.Elastic.AddMultipleRecipes("recipes-es", recipes);
         }
     }
 
     [Obsolete("Obsolete")]
-    private static IEnumerable<Recipes> InformationRecipes(IEnumerable<string> urlRecipes, HtmlWeb html,
+    private IEnumerable<Recipes> InformationRecipes(IEnumerable<string> urlRecipes, HtmlWeb html,
         int urlCategory)
     {
         var recipes = new List<Recipes>();
@@ -43,16 +43,16 @@ public static partial class ComidasTipicasChilenas
         {
             var loadPageRecipes = html.Load(url);
             var nameRecipe = loadPageRecipes.DocumentNode.CssSelect("[class='entry-title']").First().InnerText;
-            var author = "ComidasTipicasChilenas";
+            var author = "Comidas Típicas Chilenas";
             var portionAndTime = GetPortionsAndTime(loadPageRecipes);
-            var ingredients = GetIngredientsRecipe(loadPageRecipes);
+            var ingredients = GetIngredientRecipe(loadPageRecipes);
             var steps = GetStepsRecipe(loadPageRecipes);
             var guid = Guid.NewGuid().ToString();
             var categoryAndFoodDay = CsvReading.GetCategoryRecipeCtc(urlCategory);
             if (portionAndTime.portion == 0) continue;
             var recipe = new Recipes
             {
-                Autor = author, Name = nameRecipe, Portions = portionAndTime.portion,
+                Author = author, Name = nameRecipe, Portions = portionAndTime.portion,
                 PreparationTime = portionAndTime.timeRecipe, Ingredients = ingredients, Steps = steps, Url = url,
                 Difficulty = "", IdImage = guid, CategoryRecipe = categoryAndFoodDay.categoryRecipe,
                 FoodDays = categoryAndFoodDay.foodDays
@@ -64,12 +64,11 @@ public static partial class ComidasTipicasChilenas
         return recipes;
     }
 
-    private static (int portion, int timeRecipe) GetPortionsAndTime(HtmlDocument loadPageRecipes)
+    private (int portion, int timeRecipe) GetPortionsAndTime(HtmlDocument loadPageRecipes)
     {
         var elements = loadPageRecipes.DocumentNode.CssSelect("[class='wp-block-table']").CssSelect("tr")
             .Select(x => x.InnerText.CleanInnerText()).ToList();
-        var getNumber = Number().Matches(elements[4]);
-        var portion = getNumber.Any() ? int.Parse(getNumber.First().Value) : 0;
+        var portion = int.Parse(GetPortionRecipe(loadPageRecipes));
         var timeRecipe = GetTimeRecipe(elements[2], elements[3]);
 
         return (portion, timeRecipe);
@@ -103,12 +102,20 @@ public static partial class ComidasTipicasChilenas
         return int.Parse(Number().Match(textWithTime).Value);
     }
 
-    private static ICollection<Ingredient> GetIngredientsRecipe(HtmlDocument loadPageRecipe)
+    public ICollection<Ingredient> GetIngredientRecipe(HtmlDocument loadPageRecipe)
     {
         var listIngredient = loadPageRecipe.DocumentNode.CssSelect("[id='checklist-id-0']").CssSelect("li")
             .Select(x => x.InnerText);
 
         return listIngredient.Select(ingredientText => new Ingredient { IngredientText = ingredientText }).ToList();
+    }
+
+    public string GetPortionRecipe(HtmlDocument loadPageRecipe)
+    {
+        var elements = loadPageRecipe.DocumentNode.CssSelect("[class='wp-block-table']").CssSelect("tr")
+            .Select(x => x.InnerText.CleanInnerText()).ToList();
+        var getNumber = Number().Matches(elements[4]);
+        return getNumber.Any() ? getNumber.First().Value : "0";
     }
 
     private static ICollection<string> GetStepsRecipe(HtmlDocument loadPageRecipe)

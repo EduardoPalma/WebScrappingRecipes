@@ -6,12 +6,12 @@ using WebScrappingRecipes.Utils;
 
 namespace WebScrappingRecipes.ScrapedRecipes.ScratchPages;
 
-public static partial class Nutrium
+public partial class Nutrium : IInformationRecipe
 {
     private const string MainUrl = $"https://www.nutriumpfg.com/blog-nutricion-dietetica/recetas-saludables-faciles/";
 
     [Obsolete("Obsolete")]
-    public static void GetInformationRecipes(int cantPages)
+    public void GetInformationRecipes(int cantPages)
     {
         var html = new HtmlWeb();
         for (var i = 1; i <= cantPages; i++)
@@ -32,7 +32,7 @@ public static partial class Nutrium
     }
 
     [Obsolete("Obsolete")]
-    private static IEnumerable<Recipes> InformationRecipes(IEnumerable<string> urlRecipes, HtmlWeb html)
+    private IEnumerable<Recipes> InformationRecipes(IEnumerable<string> urlRecipes, HtmlWeb html)
     {
         var recipes = new List<Recipes>();
         foreach (var url in urlRecipes)
@@ -40,10 +40,9 @@ public static partial class Nutrium
             var loadPageRecipes = html.Load(url);
             var nameRecipe = loadPageRecipes.DocumentNode
                 .CssSelect("[class='elementor-heading-title elementor-size-default']").First().InnerText;
-            const string author = "nutrium";
-            var portions = GetPortionsRecipes(loadPageRecipes);
-            Console.WriteLine(url);
-            var ingredients = GetIngredientsRecipes(loadPageRecipes);
+            const string author = "Nutrium";
+            var portions = GetPortionRecipe(loadPageRecipes);
+            var ingredients = GetIngredientRecipe(loadPageRecipes);
             var preparations = GetPreparationRecipes(loadPageRecipes);
             var foodsDays = GetFoodDays(nameRecipe, url);
             var categoryRecipe = GetCategoryRecipes(nameRecipe, url);
@@ -52,9 +51,10 @@ public static partial class Nutrium
 
             var recipe = new Recipes
             {
-                Autor = author, Name = nameRecipe, Portions = Convert.ToInt32(portions), Url = url, PreparationTime = 0,
+                Author = author, Name = nameRecipe, Portions = Convert.ToInt32(portions), Url = url,
+                PreparationTime = 0,
                 Ingredients = ingredients, Steps = preparations, IdImage = guid,
-                Difficulty = "Facil",
+                Difficulty = "Fácil",
                 FoodDays = foodsDays, CategoryRecipe = categoryRecipe
             };
             if (ingredients.Any()) recipes.Add(recipe);
@@ -63,7 +63,7 @@ public static partial class Nutrium
         return recipes;
     }
 
-    private static string GetPortionsRecipes(HtmlDocument loadPageRecipes)
+    public string GetPortionRecipe(HtmlDocument loadPageRecipes)
     {
         try
         {
@@ -90,7 +90,7 @@ public static partial class Nutrium
     [GeneratedRegex("\\d+")]
     private static partial Regex MyRegex();
 
-    private static ICollection<Ingredient> GetIngredientsRecipes(HtmlDocument loadPageRecipes)
+    public ICollection<Ingredient> GetIngredientRecipe(HtmlDocument loadPageRecipes)
     {
         var ingredients = new List<Ingredient>();
         var container = loadPageRecipes.DocumentNode.Descendants("h2")
@@ -170,18 +170,25 @@ public static partial class Nutrium
     private static void GetImageRecipe(HtmlDocument loadPageRecipe, string guid)
     {
         using var oclient = new WebClient();
-        var imgUri = loadPageRecipe.DocumentNode
-            .CssSelect(
+        var img = loadPageRecipe.DocumentNode.CssSelect(
                 "[class='elementor-section elementor-top-section elementor-element elementor-element-366cc8f elementor-section-boxed elementor-section-height-default elementor-section-height-default']")
             .First()
             .CssSelect(
                 "[class='elementor-element elementor-element-eec8229 elementor-widget elementor-widget-theme-post-featured-image elementor-widget-image']")
-            .First().CssSelect("img").First().GetAttributeValue("data-lazy-src").Split(",")[0].Replace(" 1000w","");
-        imgUri = MyRegex1().Replace(imgUri, ".jpg");
-        oclient.DownloadFile(new Uri(imgUri),
-          $"C:/Users/hello/RiderProjects/WebScrappingRecipes/WebScrappingRecipes/files/image_recipes/{guid}.jpg");
+            .First().CssSelect("[class='elementor-widget-container']").First().InnerHtml.CleanInnerText();
+        var regex = MyRegex2();
+        var match = regex.Match(img).Groups[1].Value.Split(",")[0].Replace(" 1000w", "");
+        try
+        {
+            oclient.DownloadFile(new Uri(match),
+                $"C:/Users/hello/RiderProjects/WebScrappingRecipes/WebScrappingRecipes/files/image_recipes/{guid}.jpg");
+        }
+        catch (Exception)
+        {
+            Console.WriteLine("no imagen");
+        }
     }
 
-    [GeneratedRegex("\\.jpg.*$")]
-    private static partial Regex MyRegex1();
+    [GeneratedRegex("data-srcset=\"([^\"]*)\"")]
+    private static partial Regex MyRegex2();
 }

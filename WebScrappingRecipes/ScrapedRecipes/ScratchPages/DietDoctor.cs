@@ -6,13 +6,13 @@ using WebScrappingRecipes.Utils;
 
 namespace WebScrappingRecipes.ScrapedRecipes.ScratchPages;
 
-public static partial class DietDoctor
+public partial class DietDoctor : IInformationRecipe
 {
     private const string MainUrl =
         $"https://www.dietdoctor.com/es/keto/recetas-cetogenicas/desayunos?s=&st=recipe&kd_recipe_type%5B%5D=952&kd_recipe_type%5B%5D=74&kd_recipe_type%5B%5D=888&kd_recipe_type%5B%5D=906&kd_recipe_type%5B%5D=55&kd_recipe_type%5B%5D=125&kd_recipe_type%5B%5D=81&kd_recipe_type%5B%5D=164&kd_recipe_type%5B%5D=56&kd_recipe_type%5B%5D=80&kd_recipe_type%5B%5D=120&sp=";
 
     [Obsolete("Obsolete")]
-    public static void GetInformationRecipes(int cantPages)
+    public void GetInformationRecipes(int cantPages)
     {
         var html = new HtmlWeb();
         for (var i = 1; i <= cantPages; i++)
@@ -26,7 +26,7 @@ public static partial class DietDoctor
     }
 
     [Obsolete("Obsolete")]
-    private static IEnumerable<Recipes> InformationRecipes(IEnumerable<string> urlRecipes, HtmlWeb html)
+    private IEnumerable<Recipes> InformationRecipes(IEnumerable<string> urlRecipes, HtmlWeb html)
     {
         const string author = "DietDoctor";
         var recipes = new List<Recipes>();
@@ -36,8 +36,8 @@ public static partial class DietDoctor
             var nameRecipe = loadPageRecipe.DocumentNode
                 .CssSelect("[id='huge-feature-box-title']").First().InnerText.Trim();
             var timeRecipe = GetTime(loadPageRecipe);
-            var portions = GetPortions(loadPageRecipe);
-            var ingredients = GetIngredientsRecipe(loadPageRecipe);
+            var portions = GetPortionRecipe(loadPageRecipe);
+            var ingredients = GetIngredientRecipe(loadPageRecipe);
             var preparations = GetStepRecipe(loadPageRecipe);
             var category = GetCategory(loadPageRecipe);
             var foodAndCategorysRecipe = CsvReading.GetFoodDaysAndCategory(category);
@@ -48,7 +48,7 @@ public static partial class DietDoctor
             if (!foodsDays.Any() || portions == "") continue;
             var recipe = new Recipes
             {
-                Autor = author, Name = nameRecipe, Portions = Convert.ToInt32(portions), Url = urlRecipe,
+                Author = author, Name = nameRecipe, Portions = Convert.ToInt32(portions), Url = urlRecipe,
                 PreparationTime = timeRecipe,
                 Ingredients = ingredients, Steps = preparations, IdImage = guid,
                 Difficulty = difficulty,
@@ -114,18 +114,32 @@ public static partial class DietDoctor
         }
     }
 
-    private static ICollection<Ingredient> GetIngredientsRecipe(HtmlDocument loadPageRecipe)
+    public ICollection<Ingredient> GetIngredientRecipe(HtmlDocument loadPageRecipe)
     {
         var ingredients = new List<Ingredient>();
         var listIngredient = loadPageRecipe.DocumentNode.CssSelect("[class='recipe-ingredients-list-wrapper']")
             .CssSelect("li");
         foreach (var ingredient in listIngredient)
         {
-            var metricUs = ingredient.CssSelect("[class='ingredient-value ingredient-value-us']").First().InnerText
-                .CleanInnerText();
-            var ingredientClean = ingredient.InnerText.CleanInnerText().Remove(0, metricUs.Length).Replace(".", "");
-            var ingredientText = new Ingredient { IngredientText = ingredientClean.Trim() };
-            ingredients.Add(ingredientText);
+            try
+            {
+                var metricUs = ingredient.CssSelect("[class='ingredient-value ingredient-value-us']").First().InnerText
+                    .CleanInnerText().Replace(".", "");
+                var ingredientClean = ingredient.CssSelect("[class='ingredient-name-singular']").First().InnerText
+                    .CleanInnerText().Trim();
+                var ingredientCorrect = metricUs + " " + ingredientClean;
+                var ingredientText = new Ingredient { IngredientText = ingredientCorrect };
+                ingredients.Add(ingredientText);
+            }
+            catch (Exception)
+            {
+                var metricUs = ingredient.CssSelect("[class='ingredient-value ingredient-value-us']").First().InnerText
+                    .CleanInnerText().Replace(".", "");
+                var ingredientClean = ingredient.InnerText.CleanInnerText().Remove(0, metricUs.Length + 1)
+                    .Replace(".", "");
+                var ingredientText = new Ingredient { IngredientText = ingredientClean.Trim() };
+                ingredients.Add(ingredientText);
+            }
         }
 
         return ingredients;
@@ -162,7 +176,7 @@ public static partial class DietDoctor
         }
     }
 
-    private static string GetPortions(HtmlDocument loadPageRecipe)
+    public string GetPortionRecipe(HtmlDocument loadPageRecipe)
     {
         try
         {

@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "o80fW5cyPJHQ0Kgpa6gv97P2TwG5W3+obtN6n49Z773tEF7o4+drRIni05k5sbNTZIHBl59GpwtSRrVodipgPg==",
+  "dgSpecHash": "Vgvg8Ms3mXrF+KmOzUu96rP+irLwnS9+WtWfoRkvTTuyoECg8RAy3Sy7aHI9DJxZfRQH4z4TPyQv/iUgOlzr8A==",
   "success": true,
   "projectFilePath": "C:\\Users\\hello\\RiderProjects\\WebScrappingRecipes\\WebScrappingRecipes\\WebScrappingRecipes.csproj",
   "expectedPackageFiles": [
@@ -15,7 +15,11 @@
     "C:\\Users\\hello\\.nuget\\packages\\system.configuration.configurationmanager\\4.5.0-preview1-26216-02\\system.configuration.configurationmanager.4.5.0-preview1-26216-02.nupkg.sha512",
     "C:\\Users\\hello\\.nuget\\packages\\system.diagnostics.diagnosticsource\\5.0.0\\system.diagnostics.diagnosticsource.5.0.0.nupkg.sha512",
     "C:\\Users\\hello\\.nuget\\packages\\system.runtime.caching\\4.5.0-preview1-26216-02\\system.runtime.caching.4.5.0-preview1-26216-02.nupkg.sha512",
-    "C:\\Users\\hello\\.nuget\\packages\\system.security.cryptography.protecteddata\\4.5.0-preview1-26216-02\\system.security.cryptography.protecteddata.4.5.0-preview1-26216-02.nupkg.sha512"
+    "C:\\Users\\hello\\.nuget\\packages\\system.security.cryptography.protecteddata\\4.5.0-preview1-26216-02\\system.security.cryptography.protecteddata.4.5.0-preview1-26216-02.nupkg.sha512",
+    "C:\\Users\\hello\\.nuget\\packages\\microsoft.netcore.app.ref\\7.0.14\\microsoft.netcore.app.ref.7.0.14.nupkg.sha512",
+    "C:\\Users\\hello\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\7.0.14\\microsoft.windowsdesktop.app.ref.7.0.14.nupkg.sha512",
+    "C:\\Users\\hello\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\7.0.14\\microsoft.aspnetcore.app.ref.7.0.14.nupkg.sha512",
+    "C:\\Users\\hello\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\7.0.14\\microsoft.netcore.app.host.win-x64.7.0.14.nupkg.sha512"
   ],
   "logs": []
 }
